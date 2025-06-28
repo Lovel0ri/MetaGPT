@@ -168,22 +168,58 @@ class OpenAILLM(BaseLLM):
         retry=retry_if_exception_type(APIConnectionError),
         retry_error_callback=log_and_reraise,
     )
-    async def acompletion_text(self, messages: list[dict], stream=False, timeout=USE_CONFIG_TIMEOUT) -> str:
-        """when streaming, print each token in place."""
-        if stream:
-            return await self._achat_completion_stream(messages, timeout=timeout)
+    async def _achat_completion_stream(self, messages: list[dict], timeout=USE_CONFIG_TIMEOUT) -> str:
+        response: AsyncStream[ChatCompletionChunk] = await self.aclient.chat.completions.create(
+            **self._cons_kwargs(messages, timeout=self.get_timeout(timeout)), stream=True
+        )
+        usage = None
+        collected_messages = []
+        collected_reasoning_messages = []
+        has_finished = False
 
-        rsp = await self._achat_completion(messages, timeout=self.get_timeout(timeout))
-        return self.get_choice_text(rsp)
+        async for chunk in response:
+            if not chunk.choices:
+                continue
 
-    async def _achat_completion_function(
-        self, messages: list[dict], timeout: int = USE_CONFIG_TIMEOUT, **chat_configs
-    ) -> ChatCompletion:
-        messages = self.format_msg(messages)
-        kwargs = self._cons_kwargs(messages=messages, timeout=self.get_timeout(timeout), **chat_configs)
-        rsp: ChatCompletion = await self.aclient.chat.completions.create(**kwargs)
-        self._update_costs(rsp.usage)
-        return rsp
+            choice0 = chunk.choices[0]
+            delta = choice0.delta
+            if hasattr(delta, "reasoning_content") and delta.reasoning_content:
+                collected_reasoning_messages.append(delta.reasoning_content)
+                continue
+
+            text = delta.content or ""
+            finish_reason = getattr(choice0, "finish_reason", None)
+            log_llm_stream(text)
+            collected_messages.append(text)
+
+            # 捕获 usage 异常，避免中断
+            def safe_extract_usage(src):
+                try:
+                    return CompletionUsage(**src) if isinstance(src, dict) else src
+                except Exception as e:
+                    logger.warning(f"Invalid usage chunk, skipping it: {e}")
+                    return None
+
+            chunk_has_usage = hasattr(chunk, "usage") and chunk.usage
+            if has_finished and chunk_has_usage:
+                usage = safe_extract_usage(chunk.usage)
+
+            if finish_reason:
+                if chunk_has_usage:
+                    usage = safe_extract_usage(chunk.usage)
+                elif hasattr(choice0, "usage"):
+                    usage = safe_extract_usage(choice0.usage)
+                has_finished = True
+
+        log_llm_stream("\n")
+        reply = "".join(collected_messages)
+        if collected_reasoning_messages:
+            self.reasoning_content = "".join(collected_reasoning_messages)
+        if not usage:
+            usage = self._calc_usage(messages, reply)
+
+        self._update_costs(usage)
+        return reply
 
     async def aask_code(self, messages: list[dict], timeout: int = USE_CONFIG_TIMEOUT, **kwargs) -> dict:
         """Use function of tools to ask a code.

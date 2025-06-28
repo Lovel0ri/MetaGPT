@@ -83,7 +83,7 @@ class Engineer(Role):
         use_code_review (bool): Whether to use code review.
     """
 
-    name: str = "Alex"
+    name: str = "大鼠中级工程师"
     profile: str = "Engineer"
     goal: str = "write elegant, readable, extensible, efficient code"
     constraints: str = (

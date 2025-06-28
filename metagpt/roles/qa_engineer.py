@@ -37,7 +37,7 @@ from metagpt.utils.report import EditorReporter
 
 
 class QaEngineer(Role):
-    name: str = "Edward"
+    name: str = "大鼠测试工程师"
     profile: str = "QaEngineer"
     goal: str = "Write comprehensive and robust tests to ensure codes will work as expected without bugs"
     constraints: str = (
@@ -74,19 +74,32 @@ class QaEngineer(Role):
             test_doc = await self.repo.tests.get("test_" + code_doc.filename)
             if not test_doc:
                 test_doc = Document(
-                    root_path=str(self.repo.tests.root_path), filename="test_" + code_doc.filename, content=""
+                    root_path=str(self.repo.tests.root_path),
+                    filename="test_" + code_doc.filename,
+                    content=""
                 )
             logger.info(f"Writing {test_doc.filename}..")
-            context = TestingContext(filename=test_doc.filename, test_doc=test_doc, code_doc=code_doc)
+            context = TestingContext(
+                filename=test_doc.filename,
+                test_doc=test_doc,
+                code_doc=code_doc
+            )
 
             context = await WriteTest(i_context=context, context=self.context, llm=self.llm).run()
             async with EditorReporter(enable_llm_stream=True) as reporter:
-                await reporter.async_report({"type": "test", "filename": test_doc.filename}, "meta")
+                await reporter.async_report(
+                    {"type": "test", "filename": test_doc.filename},
+                    "meta"
+                )
 
                 doc = await self.repo.tests.save_doc(
-                    doc=context.test_doc, dependencies={context.code_doc.root_relative_path}
+                    doc=context.test_doc,
+                    dependencies={context.code_doc.root_relative_path}
                 )
-                await reporter.async_report(self.repo.workdir / doc.root_relative_path, "path")
+                await reporter.async_report(
+                    self.repo.workdir / doc.root_relative_path,
+                    "path"
+                )
 
             # prepare context for run tests in next round
             run_code_context = RunCodeContext(
@@ -97,12 +110,16 @@ class QaEngineer(Role):
                 additional_python_paths=[str(self.repo.srcs.workdir)],
             )
             self.publish_message(
-                AIMessage(content=run_code_context.model_dump_json(), cause_by=WriteTest, send_to=MESSAGE_ROUTE_TO_SELF)
+                AIMessage(
+                    content=run_code_context.model_dump_json(),
+                    cause_by=WriteTest,
+                    send_to=MESSAGE_ROUTE_TO_SELF
+                )
             )
 
         logger.info(f"Done {str(self.repo.tests.workdir)} generating.")
 
-    async def _run_code(self, msg):
+    async def _run_code(self, msg: Message) -> None:
         run_code_context = RunCodeContext.loads(msg.content)
         src_doc = await self.repo.srcs.get(run_code_context.code_filename)
         if not src_doc:
@@ -112,7 +129,11 @@ class QaEngineer(Role):
             return
         run_code_context.code = src_doc.content
         run_code_context.test_code = test_doc.content
-        result = await RunCode(i_context=run_code_context, context=self.context, llm=self.llm).run()
+        result = await RunCode(
+            i_context=run_code_context,
+            context=self.context,
+            llm=self.llm
+        ).run()
         run_code_context.output_filename = run_code_context.test_filename + ".json"
         await self.repo.test_outputs.save(
             filename=run_code_context.output_filename,
@@ -121,87 +142,108 @@ class QaEngineer(Role):
         )
         run_code_context.code = None
         run_code_context.test_code = None
-        # the recipient might be Engineer or myself
         recipient = parse_recipient(result.summary)
-        mappings = {"Engineer": "Alex", "QaEngineer": "Edward"}
+        mappings = {"Engineer": "大鼠中级工程师", "QaEngineer": "大鼠测试工程师"}
         if recipient != "Engineer":
             self.publish_message(
                 AIMessage(
                     content=run_code_context.model_dump_json(),
                     cause_by=RunCode,
                     instruct_content=self.input_args,
-                    send_to=MESSAGE_ROUTE_TO_SELF,
+                    send_to=MESSAGE_ROUTE_TO_SELF
                 )
             )
         else:
             kvs = self.input_args.model_dump()
             kvs["changed_test_filenames"] = [
-                str(self.repo.tests.workdir / i) for i in list(self.repo.tests.changed_files.keys())
+                str(self.repo.tests.workdir / i)
+                for i in list(self.repo.tests.changed_files.keys())
             ]
             self.publish_message(
                 AIMessage(
                     content=run_code_context.model_dump_json(),
                     cause_by=RunCode,
                     instruct_content=self.input_args,
-                    send_to=mappings.get(recipient, MESSAGE_ROUTE_TO_NONE),
+                    send_to=mappings.get(recipient, MESSAGE_ROUTE_TO_NONE)
                 )
             )
 
-    async def _debug_error(self, msg):
+    async def _debug_error(self, msg: Message) -> None:
         run_code_context = RunCodeContext.loads(msg.content)
         code = await DebugError(
-            i_context=run_code_context, repo=self.repo, input_args=self.input_args, context=self.context, llm=self.llm
+            i_context=run_code_context,
+            repo=self.repo,
+            input_args=self.input_args,
+            context=self.context,
+            llm=self.llm
         ).run()
-        await self.repo.tests.save(filename=run_code_context.test_filename, content=code)
+        await self.repo.tests.save(
+            filename=run_code_context.test_filename,
+            content=code
+        )
         run_code_context.output = None
         self.publish_message(
-            AIMessage(content=run_code_context.model_dump_json(), cause_by=DebugError, send_to=MESSAGE_ROUTE_TO_SELF)
+            AIMessage(
+                content=run_code_context.model_dump_json(),
+                cause_by=DebugError,
+                send_to=MESSAGE_ROUTE_TO_SELF
+            )
         )
 
     async def _act(self) -> Message:
+        # Guard against missing input_args
+        if not self.input_args:
+            return AIMessage(
+                content="Awaiting requirement parsing...",
+                send_to=MESSAGE_ROUTE_TO_SELF
+            )
+        # Initialize test folder if project_path provided
         if self.input_args.project_path:
             await init_python_folder(self.repo.tests.workdir)
         if self.test_round > self.test_round_allowed:
             kvs = self.input_args.model_dump()
             kvs["changed_test_filenames"] = [
-                str(self.repo.tests.workdir / i) for i in list(self.repo.tests.changed_files.keys())
+                str(self.repo.tests.workdir / i)
+                for i in list(self.repo.tests.changed_files.keys())
             ]
-            result_msg = AIMessage(
-                content=f"Exceeding {self.test_round_allowed} rounds of tests, stop. "
-                + "\n".join(list(self.repo.tests.changed_files.keys())),
+            return AIMessage(
+                content=f"Exceeding {self.test_round_allowed} rounds of tests, stop. " +
+                        "\n".join(list(self.repo.tests.changed_files.keys())),
                 cause_by=WriteTest,
-                instruct_content=AIMessage.create_instruct_value(kvs=kvs, class_name="WriteTestOutput"),
-                send_to=MESSAGE_ROUTE_TO_NONE,
+                instruct_content=AIMessage.create_instruct_value(
+                    kvs=kvs,
+                    class_name="WriteTestOutput"
+                ),
+                send_to=MESSAGE_ROUTE_TO_NONE
             )
-            return result_msg
 
         code_filters = any_to_str_set({PrepareDocuments, SummarizeCode})
         test_filters = any_to_str_set({WriteTest, DebugError})
         run_filters = any_to_str_set({RunCode})
         for msg in self.rc.news:
-            # Decide what to do based on observed msg type, currently defined by human,
-            # might potentially be moved to _think, that is, let the agent decides for itself
             if msg.cause_by in code_filters:
-                # engineer wrote a code, time to write a test for it
                 await self._write_test(msg)
             elif msg.cause_by in test_filters:
-                # I wrote or debugged my test code, time to run it
                 await self._run_code(msg)
             elif msg.cause_by in run_filters:
-                # I ran my test code, time to fix bugs, if any
                 await self._debug_error(msg)
             elif msg.cause_by == any_to_str(UserRequirement):
                 return await self._parse_user_requirement(msg)
+
         self.test_round += 1
         kvs = self.input_args.model_dump()
         kvs["changed_test_filenames"] = [
-            str(self.repo.tests.workdir / i) for i in list(self.repo.tests.changed_files.keys())
+            str(self.repo.tests.workdir / i)
+            for i in list(self.repo.tests.changed_files.keys())
         ]
         return AIMessage(
             content=f"Round {self.test_round} of tests done",
-            instruct_content=AIMessage.create_instruct_value(kvs=kvs, class_name="WriteTestOutput"),
+            instruct_content=AIMessage.create_instruct_value(
+                kvs=kvs,
+                class_name="WriteTestOutput"
+            ),
             cause_by=WriteTest,
-            send_to=MESSAGE_ROUTE_TO_NONE,
+            send_to=MESSAGE_ROUTE_TO_NONE
         )
 
     async def _parse_user_requirement(self, msg: Message) -> AIMessage:

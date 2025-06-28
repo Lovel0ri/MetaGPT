@@ -27,9 +27,9 @@ class SearchConfig(YamlModel):
 
     model_config = ConfigDict(extra="allow")
 
-    api_type: SearchEngineType = SearchEngineType.DUCK_DUCK_GO
-    api_key: str = ""
-    cse_id: str = ""  # for google
+    api_type: str = 'serpapi'  # 在这里添加类型注解
+    api_key: str = "bb5113d20b1c07cdf2d826369678147379fa316bb663b424f9086456709c5384"
+    # cse_id: str = "96b6891ff5fa544a5"  # for google
     search_func: Optional[Callable] = None
     params: dict = Field(
         default_factory=lambda: {

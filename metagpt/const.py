@@ -112,7 +112,7 @@ CLASS_VIEW_FILE_REPO = "docs/class_view"
 YAPI_URL = "http://yapi.deepwisdomai.com/"
 SD_URL = "http://172.31.0.51:49094"
 
-DEFAULT_LANGUAGE = "English"
+DEFAULT_LANGUAGE = "Chinese"
 DEFAULT_MAX_TOKENS = 1500
 COMMAND_TOKENS = 500
 BRAIN_MEMORY = "BRAIN_MEMORY"

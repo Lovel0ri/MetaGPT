@@ -1,8 +1,44 @@
 # Full Example: https://github.com/geekan/MetaGPT/blob/main/config/config2.example.yaml
 # Reflected Code: https://github.com/geekan/MetaGPT/blob/main/metagpt/config2.py
 # Config Docs: https://docs.deepwisdom.ai/main/en/guide/get_started/configuration.html
+#llm:
+#  api_type: 'gemini'
+#  api_key: 'AIzaSyAyaauMvkYd5GHscSrKGC42IycPhDqcvQ0'
+#  model: 'gemini-1.5-flash'
+#
+#llm:
+#  api_type: "deepseek"  # or azure / ollama / groq etc. Check LLMType for more options
+#  model: "deepseek-ai/DeepSeek-V3-0324"  # or gpt-3.5-turbo
+#  base_url: "https://www.chatgtp.cn/v1"  # or forward url / other llm url
+#  api_key: "sk-ysdVPhAEcinnnlGbyNm63okroWpg1BML3J2H8pkcBiXERohN"
+#llm:
+#  api_type: "claude"  # or azure / ollama / groq etc. Check LLMType for more options
+#  model: "claude-3-7-sonnet-20250219"  # or gpt-3.5-turbo
+#  base_url: "https://www.chatgtp.cn/"  # or forward url / other llm url
+#  api_key: "sk-ysdVPhAEcinnnlGbyNm63okroWpg1BML3J2H8pkcBiXERohN"
+#
+#llm:
+#  api_type: "deepseek"  # or azure / ollama / groq etc. Check LLMType for more options
+#  model: "deepseek-ai/DeepSeek-R1-0528"  # or gpt-3.5-turbo
+#  base_url: "https://www.chatgtp.cn/v1"  # or forward url / other llm url
+#  api_key: "sk-ysdVPhAEcinnnlGbyNm63okroWpg1BML3J2H8pkcBiXERohN"
+#llm:
+#  api_type: "deepseek"  # or azure / ollama / groq etc. Check LLMType for more options
+#  model: "deepseek-chat"  # or gpt-3.5-turbo
+#  base_url: "https://api.deepseek.com"  # or forward url / other llm url
+#  api_key: "sk-4753ffd4eee0442d970600e66428b3e8"
+#llm:
+#  api_type: 'gemini'
+#  api_key: 'sk-ysdVPhAEcinnnlGbyNm63okroWpg1BML3J2H8pkcBiXERohN'
+#  model: 'gemini-2.5-pro-preview-06-05'
+#llm:
+#  api_type: "deepseek"  # or azure / ollama / groq etc. Check LLMType for more options
+#  model: "Pro/deepseek-ai/DeepSeek-V3"  # or gpt-3.5-turbo
+#  base_url: "https://api.siliconflow.cn/v1/chat/completions"  # or forward url / other llm url
+#  api_key: "sk-maakovhzghfzhzmyfhdtpaawawanqqlvtvceiozadpydunsk"
+
 llm:
-  api_type: "openai"  # or azure / ollama / groq etc.
-  model: "gpt-4-turbo"  # or gpt-3.5-turbo
-  base_url: "https://api.openai.com/v1"  # or forward url / other llm url
-  api_key: "YOUR_API_KEY"
+  api_type: "openai"  # or azure / ollama / groq etc. Check LLMType for more options
+  model: "gpt-4.1-mini-2025-04-14"  # or gpt-3.5-turbo
+  base_url: "https://www.chatgtp.cn/v1"  # or forward url / other llm url
+  api_key: "sk-ysdVPhAEcinnnlGbyNm63okroWpg1BML3J2H8pkcBiXERohN"
