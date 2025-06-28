@@ -25,7 +25,7 @@ class Architect(RoleZero):
         constraints (str): Constraints or guidelines for the architect.
     """
 
-    name: str = "大鼠架构师"
+    name: str = "Bob"
     profile: str = "Architect"
     goal: str = "design a concise, usable, complete software system. output the system design."
     constraints: str = (

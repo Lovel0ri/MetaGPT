@@ -29,7 +29,7 @@ class ProductManager(RoleZero):
         constraints (str): Constraints or limitations for the product manager.
     """
 
-    name: str = "大鼠产品经理"
+    name: str = "Alice"
     profile: str = "Product Manager"
     goal: str = "Create a Product Requirement Document or market research/competitive product research."
     constraints: str = "utilize the same language as the user requirements for seamless communication"

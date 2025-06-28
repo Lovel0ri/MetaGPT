@@ -21,7 +21,7 @@ class ProjectManager(RoleZero):
         constraints (str): Constraints or limitations for the project manager.
     """
 
-    name: str = "大鼠项目经理"
+    name: str = "Eve"
     profile: str = "Project Manager"
     goal: str = (
         "break down tasks according to PRD/technical design, generate a task list, and analyze task "

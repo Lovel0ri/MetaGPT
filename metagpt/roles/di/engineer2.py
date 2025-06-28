@@ -29,7 +29,7 @@ from metagpt.utils.report import EditorReporter
 
 @register_tool(include_functions=["write_new_code"])
 class Engineer2(RoleZero):
-    name: str = "大鼠高级工程师"
+    name: str = "Alex"
     profile: str = "Engineer"
     goal: str = "Take on game, app, web development and deployment."
     instruction: str = ENGINEER2_INSTRUCTION

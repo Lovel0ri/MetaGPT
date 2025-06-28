@@ -37,7 +37,7 @@ from metagpt.utils.report import EditorReporter
 
 
 class QaEngineer(Role):
-    name: str = "大鼠测试工程师"
+    name: str = "Edward"
     profile: str = "QaEngineer"
     goal: str = "Write comprehensive and robust tests to ensure codes will work as expected without bugs"
     constraints: str = (

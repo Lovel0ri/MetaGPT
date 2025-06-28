@@ -76,7 +76,7 @@ def generate_repo(
             Architect(),       # 架构师
             Engineer2(),       # 高级工程师
             Engineer(),  # 工程师，负责业务逻辑实现
-            QaEngineer(),
+            # QaEngineer(),
             # Searcher(),       # 信息检索与调研
             # 如果需要可以追加其他角色，如 ProjectManager
             # DataAnalyst(),     # 数据分析师
